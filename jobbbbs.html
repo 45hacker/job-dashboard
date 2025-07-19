@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Job Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    @keyframes fade-in {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.4s ease-out;
+    }
+
+    @keyframes fadeUp {
+      0% { transform: translateY(20px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    li {
+      animation: fadeUp 0.8s ease forwards;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+
+  <!-- Dashboard Toggle -->
+  <div class="mb-6 text-center">
+    <button onclick="showSection('addJob')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl mx-2 hover:bg-indigo-700">Add Job</button>
+    <button onclick="showSection('viewJob')" class="bg-indigo-600 text-white px-4 py-2 rounded-xl mx-2 hover:bg-indigo-700">View Jobs</button>
+  </div>
+
+  <!-- Add Job Section -->
+  <div id="addJob" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg mx-auto animate-fade-in">
+    <h1 class="text-3xl font-bold mb-6 text-center text-indigo-600">Add a Job Listing</h1>
+    <form id="jobForm" class="space-y-4">
+      <input type="text" id="title" placeholder="Job Title" required class="w-full px-4 py-2 border rounded-xl">
+      <input type="text" id="company" placeholder="Company Name" required class="w-full px-4 py-2 border rounded-xl">
+      <input type="text" id="location" placeholder="Location" required class="w-full px-4 py-2 border rounded-xl">
+      <input type="text" id="phone" placeholder="Phone Number" class="w-full px-4 py-2 border rounded-xl">
+      <input type="text" id="salary" placeholder="Salary" class="w-full px-4 py-2 border rounded-xl">
+      <textarea id="description" placeholder="Job Description" class="w-full px-4 py-2 border rounded-xl h-24"></textarea>
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-xl">Add Job</button>
+    </form>
+    <div id="result" class="mt-4 text-center text-sm font-medium"></div>
+  </div>
+
+  <!-- View Jobs Section -->
+  <div id="viewJob" class="hidden animate-fade-in bg-white text-black min-h-screen py-10 px-4">
+    <h1 class="text-3xl md:text-4xl mb-6 text-center font-bold text-blue-700">🔥 Job Listings</h1>
+    <ul id="job-listings" class="max-w-2xl mx-auto"></ul>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const supabaseUrl = 'https://zwwckslasfxpxsxmefzp.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3d2Nrc2xhc2Z4cHhzeG1lZnpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NTYxNjUsImV4cCI6MjA2ODQzMjE2NX0._Cr1xfDofm6rKnqL_EHeDxyko7lHli6sx6Jr_7zZhqY';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    async function fetchJobs() {
+      const { data, error } = await supabase.from('jobs').select('*');
+      const listings = document.getElementById('job-listings');
+      listings.innerHTML = '';
+
+      if (error) {
+        listings.innerHTML = `<li>Error: ${error.message}</li>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        listings.innerHTML = '<li>⚠️ No job listings found.</li>';
+        return;
+      }
+
+      data.forEach((job, i) => {
+        const li = document.createElement('li');
+        li.className = "bg-blue-100 text-black p-6 rounded-xl mb-4 shadow-md";
+        li.style.animationDelay = `${i * 0.1}s`;
+        li.innerHTML = `
+          <div>
+            <strong style="font-size: 1.3rem;">${job.title}</strong> <br>
+            <em>${job.company}</em> - ${job.location}<br>
+            💰 Salary: ₹${job.salary}
+          </div>
+          <button onclick="unlock(this, '${job.phone || ''}')" class="mt-3 bg-gradient-to-r from-blue-500 to-blue-300 text-black font-bold px-4 py-1 rounded-full">Unlock Contact</button>
+          <div class="contact-info font-semibold mt-2 text-blue-800"></div>
+        `;
+        listings.appendChild(li);
+      });
+    }
+
+    window.unlock = function (btn, phone) {
+      const pass = prompt("🔐 Enter password to unlock contact:");
+      if (pass === 'ashish911') {
+        btn.nextElementSibling.textContent = phone || '📵 No contact info';
+      } else {
+        alert('❌ Wrong password, bhai!');
+      }
+    };
+
+    fetchJobs();
+
+    window.showSection = function (sectionId) {
+      document.getElementById('addJob').classList.add('hidden');
+      document.getElementById('viewJob').classList.add('hidden');
+      document.getElementById(sectionId).classList.remove('hidden');
+      if (sectionId === 'viewJob') fetchJobs();
+    };
+  </script>
+
+  <script>
+    const supabaseClient = supabase.createClient(
+      'https://zwwckslasfxpxsxmefzp.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3d2Nrc2xhc2Z4cHhzeG1lZnpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NTYxNjUsImV4cCI6MjA2ODQzMjE2NX0._Cr1xfDofm6rKnqL_EHeDxyko7lHli6sx6Jr_7zZhqY'
+    );
+
+    const form = document.getElementById('jobForm');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value;
+      const company = document.getElementById('company').value;
+      const location = document.getElementById('location').value;
+      const phone = document.getElementById('phone').value;
+      const salary = document.getElementById('salary').value;
+      const description = document.getElementById('description').value;
+
+      const { data, error } = await supabaseClient
+        .from('jobs')
+        .insert([{ title, company, location, phone, salary, description }]);
+
+      if (error) {
+        resultDiv.textContent = '❌ Error: ' + error.message;
+        resultDiv.className = 'text-red-600 mt-4';
+      } else {
+        resultDiv.textContent = '✅ Job listed successfully!';
+        resultDiv.className = 'text-green-600 mt-4';
+        form.reset();
+      }
+    });
+  </script>
+</body>
+</html>
